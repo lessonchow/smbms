@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.smbms.dao.user.UserMapper">
+
+	<resultMap type="User" id="userMapWithRoleName">
+	  	<result property="id" column="id"/>
+	  	<result property="userCode" column="userCode"/>
+	  	<result property="userName" column="userName"/>
+	  	<result property="userPassword" column="userPassword"/>
+	  	<result property="gender" column="gender"/>
+	  	<result property="birthday" column="birthday"/>
+	  	<result property="phone" column="phone"/>
+	  	<result property="address" column="address"/>
+	  	<result property="userRole" column="userRole"/>
+	  	<result property="createdBy" column="createdBy"/>
+	  	<result property="creationDate" column="creationDate"/>
+	  	<result property="modifyBy" column="modifyBy"/>
+	  	<result property="modifyDate" column="modifyDate"/>
+	  	<result property="idPicPath" column="idPicPath"/>
+	  	<result property="workPicPath" column="workPicPath"/>
+	  	<result property="userRoleName" column="userRoleName"/>
+  	</resultMap>
+
+	<!-- 增加用户信息 -->
+	<insert id="add" parameterType="User" >
+  		INSERT  INTO `smbms_user`(`userCode`,`userName`,`userPassword`,`gender`,`birthday`,
+  								`phone`,`address`,`userRole`,`createdBy`,`creationDate`,idPicPath,workPicPath) 
+  		VALUES (#{userCode},#{userName},#{userPassword},#{gender},#{birthday},
+  				#{phone},#{address},#{userRole},#{createdBy},#{creationDate},#{idPicPath},#{workPicPath})
+  	</insert>
+	
+	<!-- 通过userCode获取User -->
+	<select id="getLoginUser" resultType="User">
+		select * from smbms_user where userCode = #{userCode}
+	</select>
+	
+	<!-- 通过条件查询-userList -->
+	<select id="getUserList" resultMap="userMapWithRoleName">
+		select u.*,r.roleName as userRoleName 
+		from smbms_user u,smbms_role r 
+		where u.userRole = r.id
+		<if test="userName != null and userName != ''">
+			and u.userName like CONCAT ('%',#{userName},'%')
+		</if>
+		<if test="userRole > 0">
+			and u.userRole = #{userRole}
+		</if>
+		<!-- service层要进行以下计算再入参：currentPageNo = (currentPageNo-1)*pageSize; -->
+		order by creationDate DESC limit #{currentPageNo},#{pageSize}
+	</select>
+	
+	<!-- 通过条件查询-用户表记录数 -->
+	<select id="getUserCount" resultType="int">
+		select count(1) as count from smbms_user u,smbms_role r 
+		where u.userRole = r.id
+		<if test="userName != null and userName != ''">
+			and u.userName like CONCAT ('%',#{userName},'%')
+		</if>
+		<if test="userRole > 0">
+			and u.userRole = #{userRole}
+		</if>
+	</select>
+	
+	<!-- 通过userId删除user -->
+	<delete id="deleteUserById">
+		delete from smbms_user where id = #{delId}
+	</delete>
+	
+	<!-- 通过userId获取user -->
+	<select id="getUserById" resultMap="userMapWithRoleName">
+		select u.*,r.roleName as userRoleName from smbms_user u,smbms_role r where u.id = #{id} and u.userRole = r.id
+	</select>
+	
+	<!-- 修改用户信息 -->
+	<update id="modify">
+		update smbms_user set 
+		userName=#{userName},
+		gender=#{gender},
+		birthday=#{birthday},
+  		phone=#{phone},
+  		address=#{address},
+  		userRole=#{userRole},
+  		modifyBy=#{modifyBy},
+  		modifyDate=#{modifyDate},
+  		idPicPath = #{idPicPath},
+		workPicPath = #{workPicPath}
+  		where id=#{id}
+	</update>
+	<!-- 修改当前用户密码 -->
+	<update id="updatePwd">
+		update smbms_user set userPassword= #{pwd} where id = #{id}
+	</update>
+	
+</mapper>
+
+

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+	<context:component-scan base-package="cn.smbms.dao"/>
+	<context:component-scan base-package="cn.smbms.service"/>
+	<!-- 引入外部属性文件 -->
+	<context:property-placeholder location="classpath:database.properties" />
+	<!-- 配置数据源 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close"
+		p:driverClass="${driver}"
+		p:jdbcUrl="${url}"
+		p:user="${user}"
+		p:password="${password}"
+		p:acquireIncrement="${acquireIncrement}"
+		p:initialPoolSize="${initialPoolSize}"
+		p:minPoolSize="${minPoolSize}"
+		p:maxPoolSize="${maxPoolSize}"
+	/>
+	
+	<!-- p:testWhileIdle="true"
+		p:testOnBorrow="false"
+		p:testOnReturn="false"
+		p:validationQuery="select 1"
+		p:timeBetweenEvictionRunsMillis="60000"
+		p:numTestsPerEvictionRun="${maxPoolSize}" -->
+	
+	<!-- 配置SqlSessionFactoryBean -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 引用数据源组件 -->
+		<property name="dataSource" ref="dataSource"/>
+		<!-- 引用MyBatis配置文件中的配置 -->
+		<property name="configLocation" value="classpath:mybatis-config.xml"/>
+		<!-- 配置SQL映射文件 -->
+		<!--property name="mapperLocations">
+			<list>
+				<value>classpath:cn/smbms/dao/**/*.xml</value>
+			</list>
+		</property-->
+	</bean>
+	
+	<!-- 配置dao，批量注入映射器 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer"
+		p:basePackage="cn.smbms.dao"
+		p:sqlSessionFactoryBeanName="sqlSessionFactory"
+	/>
+	
+	<!-- 配置业务Bean并注入DAO实例 -->
+	<bean id="userService" class="cn.smbms.service.user.UserServiceImpl"
+		p:userMapper-ref="userMapper" 
+	/>
+	<bean id="billService" class="cn.smbms.service.bill.BillServiceImpl"
+		p:billMapper-ref="billMapper" 
+	/>
+	<bean id="providerService" class="cn.smbms.service.provider.ProviderServiceImpl"
+		p:providerMapper-ref="providerMapper" 
+		p:billMapper-ref="billMapper" 
+	/>
+	<bean id="roleService" class="cn.smbms.service.role.RoleServiceImpl"
+		p:roleMapper-ref="roleMapper" 
+	/>
+	
+	<!-- 定义事务管理器组件 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+		p:dataSource-ref="dataSource"
+	 />
+	 <!-- 通过<tx:advice>标签为指定的事务管理器设置事务属性 -->
+	 <tx:advice id="txAdvice" transaction-manager="transactionManager">
+	 	<!-- 定义属性，声明事务规则 -->
+	 	<tx:attributes>
+	 		<tx:method name="*" propagation="REQUIRED" />
+	 	</tx:attributes>
+	 </tx:advice>
+	 <!-- 定义切面 -->
+	 <aop:config>
+	 	<aop:pointcut expression="execution(* cn.smbms.service..*.*(..))" id="servicePointCut"/>
+	 	<!-- 将事务增强与切入点组合 -->
+	 	<aop:advisor advice-ref="txAdvice" pointcut-ref="servicePointCut"/>
+	 </aop:config>
+</beans>

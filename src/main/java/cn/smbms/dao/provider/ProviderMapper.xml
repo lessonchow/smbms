@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.smbms.dao.provider.ProviderMapper">
+	<!-- 增加供应商 -->
+	<insert id="add">
+		insert into smbms_provider 
+		(proCode,proName,proDesc,proContact,proPhone,proAddress,proFax,createdBy,creationDate,idPicPath,workPicPath) 
+		values(#{proCode},#{proName},#{proDesc},#{proContact},#{proPhone},#{proAddress},#{proFax},#{createdBy},#{creationDate},#{idPicPath},#{workPicPath})
+	</insert>
+	
+	<!-- 通过供应商名称、编码获取供应商列表-模糊查询-providerList -->
+	<select id="getProviderList" resultType="Provider">
+		select * from smbms_provider where 1=1 
+		<if test="proName != null and proName != ''">
+			and proName like CONCAT ('%', #{proName},'%')
+		</if>
+		<if test="proCode != null and proCode != ''">
+			and proCode like CONCAT ('%', #{proCode},'%')
+		</if>
+	</select>
+	
+	<!-- 通过proId删除Provider -->
+	<delete id="deleteProviderById">
+		delete from smbms_provider where id = #{delId}
+	</delete>
+	
+	<!-- 通过proId获取Provider -->
+	<select id="getProviderById" resultType="Provider">
+		select * from smbms_provider where id = #{id}
+	</select>
+	
+	<!-- 修改用户信息 -->
+	<update id="modify">
+		update smbms_provider set 
+		proName = #{proName},
+		proDesc = #{proDesc},
+		proContact = #{proContact},
+		proPhone = #{proPhone},
+		proAddress = #{proAddress},
+		proFax = #{proFax},
+		modifyBy = #{modifyBy},
+		modifyDate = #{modifyDate},
+		idPicPath = #{idPicPath},
+		workPicPath = #{workPicPath}
+		where id = #{id}
+	</update>
+	
+</mapper>
+
+
